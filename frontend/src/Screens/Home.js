@@ -9,7 +9,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
 
   const loadFoodItems = async () => {
-    let response = await fetch("http://localhost:5000/api/DisplayData", {
+    let response = await fetch("https://go-food-2-9v3n.onrender.com/api/DisplayData", {
       method: 'GET'
     });
     response = await response.json();
