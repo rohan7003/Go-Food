@@ -1,33 +1,20 @@
-// // backend/Routes/Auth.js
-
-// const express = require('express')
-// const User = require('../models/User')
-// const Order = require('../models/Order') // This line is correct
-// const router = express.Router()
-// const { body, validationResult } = require('express-validator');
-// const bcrypt = require('bcryptjs')
-// var jwt = require('jsonwebtoken');
-// const axios = require('axios')
-// const fetch = require('../middleware/fetchdetails');
-// const jwtSecret = "HaHa"
-
-// // ... (rest of your file is okay) ...
-
-// module.exports = router
-
-// backend/Routes/Auth.js
-
 const express = require('express');
 const router = express.Router();
+
 const User = require('../models/User');
-const Order = require('../models/Order');     
+const Order = require('../models/Order');
 const fetch = require('../middleware/fetchdetails');
+
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
-var jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
+
 const jwtSecret = process.env.JWT_SECRET || "HaHa";
 
-// ROUTE 1: Create a new user at POST "/api/auth/createuser". No login required.
+
+/* =========================
+   ROUTE 1: CREATE USER
+========================= */
 router.post('/createuser', [
     body('email', 'Enter a valid email').isEmail(),
     body('name', 'Name must be at least 3 characters').isLength({ min: 3 }),
@@ -44,8 +31,8 @@ router.post('/createuser', [
         const { name, email, password, location } = req.body;
 
         // ✅ check duplicate
-        let user = await User.findOne({ email });
-        if (user) {
+        let existingUser = await User.findOne({ email });
+        if (existingUser) {
             return res.status(400).json({
                 success: false,
                 error: "Email already exists"
@@ -54,35 +41,38 @@ router.post('/createuser', [
 
         // ✅ hash password
         const salt = await bcrypt.genSalt(10);
-        const securePassword = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
         // ✅ create user
-        user = await User.create({
+        const user = await User.create({
             name,
             email,
-            password: securePassword,
+            password: hashedPassword,
             location
         });
 
-        // ✅ jwt
+        // ✅ generate token
         const data = {
             user: { id: user.id }
         };
 
         const authToken = jwt.sign(data, jwtSecret);
 
-        res.json({ success: true, authToken });
+        return res.json({ success: true, authToken });
 
     } catch (error) {
         console.error("CREATE USER ERROR:", error);
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             error: error.message
         });
     }
 });
 
-// ROUTE 2: Authenticate a user at POST "/api/auth/login". No login required.
+
+/* =========================
+   ROUTE 2: LOGIN
+========================= */
 router.post('/login', [
     body('email', 'Enter a valid email').isEmail(),
     body('password', 'Password cannot be blank').exists(),
@@ -97,11 +87,13 @@ router.post('/login', [
 
     try {
         let userData = await User.findOne({ email });
+
         if (!userData) {
             return res.status(400).json({ error: "Invalid credentials" });
         }
 
         const isMatch = await bcrypt.compare(password, userData.password);
+
         if (!isMatch) {
             return res.status(400).json({ error: "Invalid credentials" });
         }
@@ -116,20 +108,22 @@ router.post('/login', [
 
     } catch (error) {
         console.error("LOGIN ERROR:", error);
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             error: error.message
         });
     }
 });
 
-// backend/Routes/Auth.js
-// Find your '/orderData' route and replace it with this:
 
+/* =========================
+   ROUTE 3: ORDER DATA
+========================= */
 router.post('/orderData', fetch, async (req, res) => {
     try {
         let data = req.body.order_data;
 
+        // add order date
         data.splice(0, 0, { Order_date: req.body.order_date });
 
         let userId = req.user.id;
@@ -148,12 +142,16 @@ router.post('/orderData', fetch, async (req, res) => {
             );
         }
 
-        res.json({ success: true });
+        return res.json({ success: true });
 
     } catch (error) {
         console.error("ORDER ERROR:", error);
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 });
+
 
 module.exports = router;
