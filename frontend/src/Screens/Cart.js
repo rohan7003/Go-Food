@@ -19,7 +19,7 @@ export default function Cart() {
     // const handleCheckOut = async () => {
     //     let userEmail = localStorage.getItem("userEmail");
     //     // console.log(data,localStorage.getItem("userEmail"),new Date())
-    //     let response = await fetch("http://go-food-2-9v3n.onrender.com/api/auth/orderData", {
+    //     let response = await fetch("https://go-food-2-9v3n.onrender.com/api/auth/orderData", {
     //         // credentials: 'include',
     //         // Origin:"http://localhost:3000/login",
     //         method: 'POST',
